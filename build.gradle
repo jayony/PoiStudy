@@ -1,0 +1,89 @@
+apply plugin: 'com.android.library'
+
+def artifact = new Properties()
+artifact.load(new FileInputStream("$projectDir/deploy.settings"))
+
+if (System.getenv('BINTRAY_VERSION') != null) {
+    artifact.version = System.getenv('BINTRAY_VERSION')
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    if (System.getenv('PUBLISH_CONFIG') != null) {
+        defaultPublishConfig System.getenv('PUBLISH_CONFIG')
+    } else {
+        defaultPublishConfig "release"
+    }
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName artifact.version
+        multiDexEnabled true
+        consumerProguardFiles 'proguard-rules.pro', '../../proguard-rules.pro'
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), '../../proguard-rules.pro', 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+}
+
+
+dependencies {
+    api fileTree(include: ['*.jar','*.aar'], dir: 'libs')
+
+    testImplementation "junit:junit:$rootProject.junitVersion"
+    androidTestImplementation "com.android.support.test:runner:$rootProject.runnerVersion"
+    androidTestImplementation "com.android.support.test.espresso:espresso-core:${rootProject.espressoVersion}"
+
+    api ("org.apache.xmlgraphics:batik-all:$rootProject.batikAllVersion") {
+        exclude group: 'xml-apis', module: 'xml-apis'
+        exclude group: 'org.apache.xmlgraphics'
+    }
+    api "commons-codec:commons-codec:$rootProject.codecVersion"
+    api "org.apache.commons:commons-collections4:$rootProject.collections4Version"
+    api "org.apache.commons:commons-compress:$rootProject.compressVersion"
+    api "org.apache.commons:commons-math3:$rootProject.math3Version"
+    api "com.github.virtuald:curvesapi:$rootProject.curvesapiVersion"
+    api ("javax.xml.bind:jaxb-api:$rootProject.jaxbApiVersion") {
+        exclude group: 'javax.activation', module: 'javax.activation-api'
+    }
+    api "com.sun.org.apache:jaxp-ri:$rootProject.jaxpRiVersion"
+    api "org.apache.xmlbeans:xmlbeans:$rootProject.xmlbeansVersion"
+    //noinspection DuplicatePlatformClasses
+    api ("commons-logging:commons-logging:$rootProject.loggingVersion") {
+        exclude group: 'commons-logging', module: 'commons-logging'
+    }
+}
+
+apply from: file(rootProject.projectDir.absolutePath + '/deploy.gradle')
